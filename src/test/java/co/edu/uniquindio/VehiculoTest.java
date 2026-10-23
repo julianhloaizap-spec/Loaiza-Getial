@@ -1,61 +1,84 @@
 package co.edu.uniquindio;
 
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.logging.Logger;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-class VehiculoTest {
+import java.time.LocalDate;
 
-    private static final Logger LOG = Logger.getLogger(VehiculoTest.class.getName());
+public class VehiculoTest {
 
-    @DisplayName("Validar creación de Transportes de tropasa")
-    @Test
-     void testCrearTransportesTropas (){
-        LOG.info("Iniciando prueba Transportes Tropas.");
+    private TransporteTropas transporte;
+    private Blindado blindado;
+    private Apoyo apoyo;
 
-        TransporteTropas transporteTropas = new TransporteTropas("01", "modelo1", 2020, 15000, EstadoOperativo.DISPONIBLE, 30);
-        assertEquals("01", transporteTropas.getId());
-        assertEquals("modelo1", transporteTropas.getModelo());
-        assertEquals(2020, transporteTropas.getAnioFabricacion());
-        assertEquals(15000, transporteTropas.getKilometraje());
-        assertEquals(EstadoOperativo.DISPONIBLE, transporteTropas.getEstadoOperativo());
-        assertEquals(30, transporteTropas.getCapacidadSoldados());
-        LOG.info(transporteTropas.toString());
-        LOG.info("Finalizando prueba Transportes Tropas.");
-
-    }
-    @DisplayName("Validar creación de Vehiculo Blindado")
-    @Test
-    void testCrearVehiculoBlindado() {
-        LOG.info("Iniciando prueba Blindado.");
-
-        Blindado vehiculoBlindado = new Blindado("10", "modelo10", 2021, 20000, EstadoOperativo.DISPONIBLE, 5);
-        assertEquals("10", vehiculoBlindado.getId());
-        assertEquals("modelo10", vehiculoBlindado.getModelo());
-        assertEquals(2021, vehiculoBlindado.getAnioFabricacion());
-        assertEquals(20000, vehiculoBlindado.getKilometraje());
-        assertEquals(EstadoOperativo.DISPONIBLE, vehiculoBlindado.getEstadoOperativo());
-        assertEquals(5, vehiculoBlindado.getNivelBlindaje());
-        LOG.info(vehiculoBlindado.toString());
-        LOG.info("Finalizando prueba Blindado...");
+    @BeforeEach
+    void creacionObjetos() {
+        transporte = new TransporteTropas("T-01", "Camion", 2020, 12000.0, EstadoOperativo.DISPONIBLE, 25);
+        blindado = new Blindado("B-01", "Blindado", 2021, 8000.0, EstadoOperativo.DISPONIBLE, 4);
+        apoyo = new Apoyo("A-01", "Ambulancia", 2022, 5000.0, EstadoOperativo.DISPONIBLE, TipoFuncion.MEDICO);
     }
 
-    @DisplayName("Validar creación de Vehiculo Apoyo")
+    // Caso 1: Validar la creacion de los diferentes tipos de vehiculos
     @Test
-    void testCrearVehiculoApoyo() {
-        LOG.info("Iniciando prueba vehiculo apoyo.");
+    void testCreacionVehiculos() {
+        assertNotNull(transporte);
+        assertEquals("T-01", transporte.getId());
+        assertEquals("Camion", transporte.getModelo());
+        assertEquals(2020, transporte.getAnioFabricacion());
+        assertEquals(12000.0, transporte.getKilometraje());
+        assertEquals(EstadoOperativo.DISPONIBLE, transporte.getEstadoOperativo());
+        assertEquals(25, transporte.getCapacidadSoldados());
 
-        Apoyo vehiculoApoyo = new Apoyo("11", "modelo11", 2024, 50000, EstadoOperativo.DISPONIBLE, TipoFuncion.MEDICO);
-        assertEquals("11", vehiculoApoyo.getId());
-        assertEquals("modelo11", vehiculoApoyo.getModelo());
-        assertEquals(2024, vehiculoApoyo.getAnioFabricacion());
-        assertEquals(50000, vehiculoApoyo.getKilometraje());
-        assertEquals(EstadoOperativo.DISPONIBLE, vehiculoApoyo.getEstadoOperativo());
-        assertEquals(TipoFuncion.MEDICO, vehiculoApoyo.getTipoFuncion());
-        LOG.info(vehiculoApoyo.toString());
-        LOG.info("Finalizando prueba Blindado...");
+        assertNotNull(blindado);
+        assertEquals(4, blindado.getNivelBlindaje());
+
+        assertNotNull(apoyo);
+        assertEquals(TipoFuncion.MEDICO, apoyo.getTipoFuncion());
+    }
+
+    // Caso 6: Actualizar correctamente la información de un vehiculo
+    @Test
+    void testActualizarInformacionVehiculo() {
+        assertTrue(transporte.setKilometraje(15000.0));
+        assertEquals(15000.0, transporte.getKilometraje());
+
+        assertTrue(transporte.setEstadoOperativo(EstadoOperativo.EN_MANTENIMIENTO));
+        assertEquals(EstadoOperativo.EN_MANTENIMIENTO, transporte.getEstadoOperativo());
+
+        // No debe bajar el kilometraje
+        assertFalse(transporte.setKilometraje(1000.0));
+        assertEquals(15000.0, transporte.getKilometraje());
+    }
+
+    // Caso 8: Contar solo las misiones completadas
+    @Test
+    void testContarUnicamenteMisionesCompletadas() {
+        Batallon batallon = new Batallon("01", "Cacique", "03", "Calarcá", 3);
+        batallon.registrarVehiculo(transporte);
+
+        // Misión 1: completada
+        Mision m1 = new Mision("M-01", LocalDate.now(), "Zona A");
+        m1.agregarPersonal("Capitán Ríos");
+        batallon.registrarMision(m1);
+        batallon.asignarVehiculoMision("M-01", "T-01");
+        batallon.iniciarMision("M-01");
+        batallon.completarMision("M-01");
+
+        // Misión 2: incompleto
+        Mision m2 = new Mision("M-02", LocalDate.now(), "Zona B");
+        m2.agregarPersonal("Teniente Gómez");
+        batallon.registrarMision(m2);
+        batallon.asignarVehiculoMision("M-02", "T-01");
+        batallon.iniciarMision("M-02");
+
+        // Misión 3: Se deja en estado planificada
+        Mision m3 = new Mision("M-03", LocalDate.now(), "Zona C");
+        m3.agregarPersonal("Sargento Silva");
+        batallon.registrarMision(m3);
+        batallon.asignarVehiculoMision("M-03", "T-01");
+
+        // Debe contar 1 misión completada
+        assertEquals(1, transporte.contarMisionesCompletadas());
     }
 }

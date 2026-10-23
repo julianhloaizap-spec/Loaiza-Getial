@@ -185,4 +185,13 @@ public class Batallon {
                 + ", cantidadVehiculos=" + listaVehiculos.size()
                 + ", cantidadMisiones=" + listaMision.size() + "}";
     }
+
+    public boolean eliminarVehiculo(String id) {
+        boolean eliminado = false;
+        Vehiculo vehiculo = buscarVehiculo(id);
+        if (vehiculo != null && vehiculo.getListaDetallesMision().isEmpty()) {
+            eliminado = listaVehiculos.remove(vehiculo);
+        }
+        return eliminado;
+    }
 }
